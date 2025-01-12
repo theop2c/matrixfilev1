@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Cancel Subscription</title>
+</head>
+<body>
+  <h1>Test Cancel Subscription</h1>
+  <form id="cancelForm">
+    <label for="userId">User ID:</label>
+    <input type="text" id="userId" name="userId" required />
+    <br /><br />
+    <label for="subscriptionId">Subscription ID:</label>
+    <input type="text" id="subscriptionId" name="subscriptionId" required />
+    <br /><br />
+    <button type="submit">Cancel Subscription</button>
+  </form>
+  <div id="response" style="margin-top: 20px;"></div>
+
+  <script>
+    const form = document.getElementById("cancelForm");
+    const responseDiv = document.getElementById("response");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const userId = document.getElementById("userId").value;
+      const subscriptionId = document.getElementById("subscriptionId").value;
+
+      try {
+        // Remplacez l'URL par celle de votre émulateur local
+        const url = "http://127.0.0.1:5001/<your-project-id>/us-central1/api/cancelSubscription";
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId, subscriptionId }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          responseDiv.innerHTML = `<pre style="color: green;">${JSON.stringify(result, null, 2)}</pre>`;
+        } else {
+          responseDiv.innerHTML = `<pre style="color: red;">Error: ${JSON.stringify(result, null, 2)}</pre>`;
+        }
+      } catch (error) {
+        responseDiv.innerHTML = `<pre style="color: red;">Error: ${error.message}</pre>`;
+      }
+    });
+  </script>
+</body>
+</html>
