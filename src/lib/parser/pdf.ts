@@ -2,11 +2,16 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { logger } from '../logger';
 
 // Initialize PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).toString();
+try {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = /* @vite-ignore */ new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
+} catch (workerError) {
+  logger.error('Failed to configure PDF.js worker', workerError);
+}
 
+// Function to parse a PDF file and extract text
 export async function parsePDF(content: ArrayBuffer): Promise<string> {
   try {
     logger.debug('Starting PDF parsing');
@@ -18,14 +23,14 @@ export async function parsePDF(content: ArrayBuffer): Promise<string> {
       throw new Error('Le fichier ne semble pas être un PDF valide');
     }
 
-    // Load the PDF document with additional options for better compatibility
+    // Load the PDF document
     const loadingTask = pdfjsLib.getDocument({
       data: content,
       useWorkerFetch: false,
       isEvalSupported: false,
       disableFontFace: true,
       nativeImageDecoderSupport: 'none',
-      ignoreErrors: true
+      ignoreErrors: true,
     });
 
     const pdf = await loadingTask.promise;
@@ -51,7 +56,6 @@ export async function parsePDF(content: ArrayBuffer): Promise<string> {
         // Extract text with proper spacing and structure
         const pageText = textContent.items
           .reduce((acc: string, item: any) => {
-            // Add appropriate spacing based on item positions
             const itemText = item.str || '';
             return acc + (acc && !acc.endsWith(' ') ? ' ' : '') + itemText;
           }, '')
@@ -77,7 +81,7 @@ export async function parsePDF(content: ArrayBuffer): Promise<string> {
       textLength: text.length 
     });
     
-    // Clean up the text while preserving structure
+    // Clean up the text
     const cleanedText = text
       .replace(/\n{3,}/g, '\n\n')
       .replace(/[^\S\n]+/g, ' ')
@@ -91,7 +95,7 @@ export async function parsePDF(content: ArrayBuffer): Promise<string> {
 
   } catch (error) {
     logger.error('PDF parsing failed:', error);
-    
+
     if (error instanceof Error) {
       if (error.message.includes('Invalid PDF structure')) {
         throw new Error('La structure du PDF est invalide ou le fichier est corrompu');

@@ -1,7 +1,7 @@
 export interface Utilisateur {
   id: string;
   email: string;
-  role: 'freemium' | 'premium' | 'or' | 'admin';
+  role: 'freemium' | 'premium' | 'gold';
   blocked?: boolean;
   stockageUtilise: number;
   nombreFichiers: number;

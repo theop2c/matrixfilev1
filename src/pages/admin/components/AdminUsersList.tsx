@@ -136,8 +136,8 @@ export function AdminUsersList() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <RoleSelect
-                    currentRole={user.role}
-                    onRoleChange={(role) => handleRoleChange(user.id, role)}
+                  currentRole={user.role}
+                  onRoleChange={(role) => handleRoleChange(user.id, role)}
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

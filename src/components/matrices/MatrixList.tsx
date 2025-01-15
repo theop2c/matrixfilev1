@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMatrixStore } from '@/store/matrix';
 import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Edit2, Search, ArrowUpDown } from 'lucide-react';
-import { MatrixEditor } from './MatrixEditor';
+import { MatrixEditor } from '@/pages/matrices/components/MatrixEditor';
 import { MatrixDeleteDialog } from '@/components/modals/MatrixDeleteDialog';
 import { formatDate } from '@/lib/utils';
 import type { Matrix } from '@/types/matrix';

@@ -4,7 +4,6 @@ import { useMatrixStore } from '@/store/matrix';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { FileText, Clock, Search, ArrowUpDown } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,6 +16,7 @@ export function History() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [matrixNames, setMatrixNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user) {
@@ -24,26 +24,45 @@ export function History() {
     }
   }, [user, fetchAllAnalyses]);
 
-  // Filter analyses based on search term
-  const filteredAnalyses = analyses.filter(analysis => 
+  useEffect(() => {
+    const fetchMatrixNames = async () => {
+      const uniqueMatrixIds = Array.from(new Set(analyses.map(a => a.matrixId)));
+      const names: Record<string, string> = {};
+
+      for (const id of uniqueMatrixIds) {
+        try {
+          const response = await fetch(`/api/matrices/${id}`);
+          const data = await response.json();
+          names[id] = data.name || 'Unknown Matrix';
+        } catch {
+          names[id] = 'Unknown Matrix';
+        }
+      }
+      setMatrixNames(names);
+    };
+
+    if (analyses.length > 0) {
+      fetchMatrixNames();
+    }
+  }, [analyses]);
+
+  const filteredAnalyses = analyses.filter(analysis =>
     analysis.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Sort analyses by date
   const sortedAnalyses = [...filteredAnalyses].sort((a, b) => {
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
     return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
-  // Calculate pagination
   const totalPages = Math.ceil(sortedAnalyses.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedAnalyses = sortedAnalyses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const toggleSort = () => {
-    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    setCurrentPage(1); // Reset to first page when sorting changes
+    setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    setCurrentPage(1);
   };
 
   return (
@@ -64,7 +83,7 @@ export function History() {
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page when search changes
+                  setCurrentPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -93,10 +112,7 @@ export function History() {
               <p className="text-gray-600">
                 {searchTerm ? 'No matching analyses found' : 'No analyses yet'}
               </p>
-              <Button
-                onClick={() => navigate('/matrices')}
-                className="mt-4"
-              >
+              <Button onClick={() => navigate('/matrices')} className="mt-4">
                 Create an analysis
               </Button>
             </div>
@@ -113,10 +129,17 @@ export function History() {
                         <h3 className="font-medium text-lg">{analysis.name}</h3>
                         <div className="flex items-center text-sm text-gray-500 mt-1">
                           <Clock className="w-4 h-4 mr-1" />
-                          {formatDate(analysis.createdAt)}
+                          {new Date(analysis.createdAt).toLocaleString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })}
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          {analysis.responses.length} responses
+                          Matrice : {matrixNames[analysis.matrixId] || 'Loading...'} - {analysis.responses.length} réponses
                         </p>
                       </div>
                       <Button
@@ -129,7 +152,6 @@ export function History() {
                 ))}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center space-x-2 mt-6">
                   <Button

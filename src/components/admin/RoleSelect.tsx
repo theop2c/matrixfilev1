@@ -12,7 +12,7 @@ export function RoleSelect({ currentRole, onRoleChange }: RoleSelectProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const roles: Utilisateur['role'][] = ['freemium', 'premium', 'or', 'admin'];
+  const roles: Utilisateur['role'][] = ['freemium', 'premium', 'gold'];
 
   const handleRoleChange = async (role: Utilisateur['role']) => {
     if (role === currentRole) {
@@ -33,12 +33,10 @@ export function RoleSelect({ currentRole, onRoleChange }: RoleSelectProps) {
 
   const getRoleColor = (role: Utilisateur['role']) => {
     switch (role) {
-      case 'or':
+      case 'gold':
         return 'bg-yellow-100 text-yellow-800';
       case 'premium':
         return 'bg-purple-100 text-purple-800';
-      case 'admin':
-        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }

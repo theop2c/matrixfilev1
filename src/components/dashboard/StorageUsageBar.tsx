@@ -10,13 +10,20 @@ interface StorageUsageBarProps {
 export function StorageUsageBar({ used, role }: StorageUsageBarProps) {
   // Ensure we have a valid limit for the role
   const limit = USER_STORAGE_LIMITS[role] || USER_STORAGE_LIMITS.freemium;
-  const percentage = Math.min((used / limit) * 100, 100);
-  
+
+  // Ensure `limit` and `used` are valid numbers
+  const safeLimit = Number.isFinite(limit) ? limit : 0;
+  const safeUsed = Number.isFinite(used) ? used : 0;
+
+  const percentage = Math.min((safeUsed / safeLimit) * 100, 100);
+
   const getBarColor = () => {
     if (percentage > 90) return 'bg-red-500';
     if (percentage > 70) return 'bg-yellow-500';
     return 'bg-blue-500';
   };
+
+  const remainingDiskSpace = safeLimit - safeUsed > 0 ? formatBytes(safeLimit - safeUsed) : '0 bytes';
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm space-y-4">
@@ -45,14 +52,15 @@ export function StorageUsageBar({ used, role }: StorageUsageBarProps) {
         </div>
         
         <div className="flex justify-between text-sm text-gray-600">
-          <span>{formatBytes(used)} used</span>
-          <span>{formatBytes(limit)} total</span>
+          <span>{formatBytes(safeUsed)} used</span>
+          <span>{formatBytes(safeLimit)} total</span>
         </div>
       </div>
 
-      {percentage > 90 && (
+
+      {percentage > 80 && (
         <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-          Warning: You're running out of storage space. Consider upgrading your plan or removing unused files.
+          Warning: You're running out of storage space. You only have {remainingDiskSpace} left. Consider upgrading your plan or removing unused files.
         </div>
       )}
     </div>
