@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMatrixStore } from '@/store/matrix';
 import { useAuthStore } from '@/store/auth';
@@ -12,11 +12,10 @@ type SortDirection = 'asc' | 'desc';
 export function History() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { analyses, loading, error, fetchAllAnalyses } = useMatrixStore();
+  const { analyses, matrices, loading: matricesLoading, error, fetchAllAnalyses } = useMatrixStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [matrixNames, setMatrixNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user) {
@@ -24,45 +23,32 @@ export function History() {
     }
   }, [user, fetchAllAnalyses]);
 
-  useEffect(() => {
-    const fetchMatrixNames = async () => {
-      const uniqueMatrixIds = Array.from(new Set(analyses.map(a => a.matrixId)));
-      const names: Record<string, string> = {};
+  const filteredAnalyses = useMemo(() => {
+    return analyses.filter((analysis) =>
+      analysis.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [analyses, searchTerm]);
 
-      for (const id of uniqueMatrixIds) {
-        try {
-          const response = await fetch(`/api/matrices/${id}`);
-          const data = await response.json();
-          names[id] = data.name || 'Unknown Matrix';
-        } catch {
-          names[id] = 'Unknown Matrix';
-        }
-      }
-      setMatrixNames(names);
-    };
-
-    if (analyses.length > 0) {
-      fetchMatrixNames();
-    }
-  }, [analyses]);
-
-  const filteredAnalyses = analyses.filter(analysis =>
-    analysis.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const sortedAnalyses = [...filteredAnalyses].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-  });
+  const sortedAnalyses = useMemo(() => {
+    return [...filteredAnalyses].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  }, [filteredAnalyses, sortDirection]);
 
   const totalPages = Math.ceil(sortedAnalyses.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedAnalyses = sortedAnalyses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const toggleSort = () => {
-    setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     setCurrentPage(1);
+  };
+
+  const getMatrixName = (matrixId: string) => {
+    const matrix = matrices.find((m) => m.id === matrixId);
+    return matrix ? matrix.name : 'Unknown Matrix';
   };
 
   return (
@@ -98,7 +84,7 @@ export function History() {
             </Button>
           </div>
 
-          {loading ? (
+          {matricesLoading ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
             </div>
@@ -119,7 +105,7 @@ export function History() {
           ) : (
             <>
               <div className="space-y-4">
-                {paginatedAnalyses.map(analysis => (
+                {paginatedAnalyses.map((analysis) => (
                   <div
                     key={analysis.id}
                     className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow"
@@ -139,7 +125,7 @@ export function History() {
                           })}
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          Matrice : {matrixNames[analysis.matrixId] || 'Loading...'} - {analysis.responses.length} réponses
+                          Matrix: {getMatrixName(analysis.matrixId)} - {analysis.responses.length} responses
                         </p>
                       </div>
                       <Button
@@ -156,7 +142,7 @@ export function History() {
                 <div className="flex justify-center items-center space-x-2 mt-6">
                   <Button
                     variant="outline"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
                   >
                     Previous
@@ -166,7 +152,7 @@ export function History() {
                   </div>
                   <Button
                     variant="outline"
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
                   >
                     Next

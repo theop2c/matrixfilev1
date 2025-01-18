@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Edit2, Search, ArrowUpDown } from 'lucide-react';
 import { MatrixEditor } from './MatrixEditor';
 import { MatrixDeleteDialog } from '@/components/modals/MatrixDeleteDialog';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils'; // Consistent date formatting utility
 import { logger } from '@/lib/logger';
 import type { Matrix } from '@/types/matrix';
 
@@ -27,7 +27,7 @@ export function MatrixList() {
 
   useEffect(() => {
     logger.debug('MatrixList mounted', { userId: user?.id });
-    
+
     async function loadMatrices() {
       if (!user?.id) {
         logger.warn('No user ID available for fetching matrices');
@@ -57,14 +57,10 @@ export function MatrixList() {
     setCurrentPage(1);
   }, [searchTerm, sortDirection]);
 
-  // Filter and validate matrices
-  const filteredMatrices = matrices.filter(matrix => {
-    if (!matrix?.name || !matrix?.id) {
-      logger.warn('Invalid matrix data found:', matrix);
-      return false;
-    }
-    return matrix.name.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  // Filter matrices based on search term
+  const filteredMatrices = matrices.filter((matrix) =>
+    matrix?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Sort matrices by creation date
   const sortedMatrices = [...filteredMatrices].sort((a, b) => {
@@ -73,7 +69,7 @@ export function MatrixList() {
     return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
-  // Calculate pagination
+  // Paginate matrices
   const totalPages = Math.ceil(sortedMatrices.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedMatrices = sortedMatrices.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -92,7 +88,7 @@ export function MatrixList() {
   };
 
   const toggleSort = () => {
-    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
   };
 
   if (loading) {
@@ -107,9 +103,9 @@ export function MatrixList() {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-md">
         <p className="text-sm text-red-600">{error || fetchError}</p>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => user && fetchMatrices(user.id)}
           className="mt-2"
         >
@@ -155,15 +151,15 @@ export function MatrixList() {
         <>
           <div className="grid gap-4">
             {paginatedMatrices.map((matrix) => (
-              <div 
-                key={matrix.id} 
+              <div
+                key={matrix.id}
                 className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium text-lg">{matrix.name}</h3>
                     <div className="flex items-center text-sm text-gray-500 mt-1 space-x-4">
-                      <span>{matrix.questions?.length || 0} questionsss</span>
+                      <span>{matrix.questions?.length || 0} questions</span>
                       <span>{formatDate(matrix.createdAt)}</span>
                     </div>
                   </div>
@@ -203,7 +199,7 @@ export function MatrixList() {
             <div className="flex justify-center items-center space-x-2 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
                 Previous
@@ -213,7 +209,7 @@ export function MatrixList() {
               </div>
               <Button
                 variant="outline"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
               >
                 Next
@@ -226,7 +222,7 @@ export function MatrixList() {
       {/* Modals */}
       {editingMatrix && (
         <MatrixEditor
-          matrix={matrices.find(m => m.id === editingMatrix)!}
+          matrix={matrices.find((m) => m.id === editingMatrix)!}
           onClose={() => setEditingMatrix(null)}
           onSave={() => setEditingMatrix(null)}
         />
